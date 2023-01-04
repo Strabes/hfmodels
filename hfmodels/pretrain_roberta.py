@@ -14,9 +14,11 @@ from transformers import (
     pipeline)
 
 VOCAB_SIZE = 3000
-N_RECORDS = 20_000
+#N_RECORDS = 20_000
 
 dataset = load_dataset("cnn_dailymail", version="3.0.0")
+
+N_RECORDS = dataset["train"].num_rows
 
 # Initialize a tokenizer
 tokenizer = ByteLevelBPETokenizer()
@@ -52,7 +54,10 @@ tokenizer.encode("This story is about politics.")
 
 tokenizer.encode("This story is about politics.").tokens
 
-
+# RoBERTa doesn't need to know which token is the mask_token,
+# only the tokenizer needs that info because:
+# the data collator uses the tokenizer to construct
+# the training data for mlm
 config = RobertaConfig(
     vocab_size=VOCAB_SIZE,
     hidden_size=8,
@@ -89,7 +94,8 @@ training_args = TrainingArguments(
     per_gpu_train_batch_size=32,
     save_steps=10_000,
     save_total_limit=2,
-    prediction_loss_only=True
+    prediction_loss_only=True,
+    learning_rate=0.01
 )
 
 def tokenization(batched_text):
